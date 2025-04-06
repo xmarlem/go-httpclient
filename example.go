@@ -3,23 +3,19 @@ package main
 import (
 	"fmt"
 	"io"
-	"net/http"
-	"time"
 
 	"github.com/xmarlem/go-httpclient/gohttp"
 )
 
 var githubHttpClient = getGithubClient()
 
-func getGithubClient() gohttp.HTTPClient {
-	client := gohttp.New()
+func getGithubClient() gohttp.Client {
 
-	client.SetMaxIdleConnections(20)
-	client.SetConnectionTimeout(2 * time.Second)
-	client.SetRequestTimeout(4 * time.Second)
-	commonHeaders := make(http.Header)
-	commonHeaders.Set("Authorization", "Bearer ABC-123")
-	client.SetHeaders(commonHeaders)
+	builder := gohttp.NewBuilder().
+		DisableTimeouts(true).
+		SetMaxIdleConnections(5)
+
+	client := builder.Build()
 
 	return client
 }

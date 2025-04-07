@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"io"
 
 	"github.com/xmarlem/go-httpclient/gohttp"
 )
@@ -25,32 +24,35 @@ type User struct {
 	LastName  string `json:"last_name"`
 }
 
-func createUser(user User) {
+// func createUser(user User) {
 
-	resp, err := githubHttpClient.Post("https://api.github.com", nil, user)
-	if err != nil {
-		panic(err)
-	}
+// 	resp, err := githubHttpClient.Post("https://api.github.com", nil, user)
+// 	if err != nil {
+// 		panic(err)
+// 	}
 
-	bytes, _ := io.ReadAll(resp.Body)
-	fmt.Println(string(bytes))
+// 	bytes, _ := io.ReadAll(resp.Body)
+// 	fmt.Println(string(bytes))
 
-}
+// }
 
 func getUrls() {
 	response, err := githubHttpClient.Get("https://api.github.com", nil)
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println(response.StatusCode)
 
-	bytes, _ := io.ReadAll(response.Body)
-	fmt.Println(string(bytes))
+	var user User
+	if err := response.UnmarshalJson(&user); err != nil {
+		panic(err)
+	}
+
+	fmt.Println(response.Status())
+	fmt.Println(response.StatusCode())
+	fmt.Println(response.String())
 }
 
 func main() {
-	getUrls()
-	getUrls()
-	getUrls()
+
 	getUrls()
 }

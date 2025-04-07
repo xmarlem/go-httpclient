@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"encoding/xml"
 	"fmt"
+	"io"
 	"net"
 	"net/http"
 	"strings"
@@ -39,7 +40,7 @@ func (c *httpClient) do(
 	method, url string,
 	headers http.Header,
 	body interface{},
-) (*http.Response, error) {
+) (*Response, error) {
 	fullHeaders := c.getRequestHeaders(headers)
 
 	requestBody, err := c.getRequestBody(fullHeaders.Get("Content-Type"), body)
@@ -56,24 +57,40 @@ func (c *httpClient) do(
 
 	client := c.getHttpClient()
 
-	return client.Do(req)
+	response, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+
+	defer response.Body.Close()
+	responseBody, err := io.ReadAll(response.Body)
+
+	if err != nil {
+		return nil, err
+	}
+	finalResponse := Response{
+		status:     response.Status,
+		statusCode: response.StatusCode,
+		headers:    response.Header,
+		body:       responseBody,
+	}
+
+	return &finalResponse, nil
 
 }
 
 func (c *httpClient) getHttpClient() *http.Client {
-	if c.client != nil {
-		return c.client
-	}
-
-	c.client = &http.Client{
-		Transport: &http.Transport{
-			MaxIdleConnsPerHost:   c.getMaxIdleConnections(),
-			ResponseHeaderTimeout: c.getResponseTimeout(),
-			DialContext: (&net.Dialer{
-				Timeout: c.getConnectionTimeout(),
-			}).DialContext,
-		},
-	}
+	c.clientOnce.Do(func() {
+		c.client = &http.Client{
+			Transport: &http.Transport{
+				MaxIdleConnsPerHost:   c.getMaxIdleConnections(),
+				ResponseHeaderTimeout: c.getResponseTimeout(),
+				DialContext: (&net.Dialer{
+					Timeout: c.getConnectionTimeout(),
+				}).DialContext,
+			},
+		}
+	})
 
 	return c.client
 }

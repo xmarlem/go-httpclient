@@ -48,6 +48,11 @@ func (c *httpClient) do(
 		return nil, err
 	}
 
+	// required for testing...
+	if mock := mockupServer.getMock(method, url, string(requestBody)); mock != nil {
+		return mock.GetResponse()
+	}
+
 	req, err := http.NewRequest(method, url, bytes.NewBuffer(requestBody))
 	if err != nil {
 		return nil, fmt.Errorf("unable to create request: %v", err)

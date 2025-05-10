@@ -1,6 +1,9 @@
 package examples
 
-import "fmt"
+import (
+	"fmt"
+	"net/http"
+)
 
 type Endpoints struct {
 	CurrentUserUrl   string `json:"current_user_url"`
@@ -14,9 +17,9 @@ func GetEndpoints() (*Endpoints, error) {
 		return nil, err
 	}
 
-	fmt.Println(fmt.Sprintf("Status code %d", response.StatusCode()))
-	fmt.Println(fmt.Sprintf("Status %s", response.Status()))
-	fmt.Println(fmt.Sprintf("Body %s", response.String()))
+	fmt.Printf("%s\n", fmt.Sprintf("Status code %d", response.StatusCode()))
+	fmt.Printf("%s\n", fmt.Sprintf("Status %s", response.Status()))
+	fmt.Printf("%s\n", fmt.Sprintf("Body %s", response.String()))
 
 	var endpoints Endpoints
 
@@ -24,8 +27,26 @@ func GetEndpoints() (*Endpoints, error) {
 		return nil, err
 	}
 
-	fmt.Println(fmt.Sprintf("Repository URL: %s", endpoints.RepositoryUrl))
+	fmt.Printf("%s\n", fmt.Sprintf("Repository URL: %s", endpoints.RepositoryUrl))
 
 	return &endpoints, nil
+
+}
+
+func GetEndpointsWithUserAgent() (*Endpoints, error) {
+
+	h := http.Header{}
+
+	response, err := httpClient.Get("https://api.github.com", h)
+	if err != nil {
+		return nil, err
+	}
+
+	var ep Endpoints
+	if err = response.UnmarshalJson(&ep); err != nil {
+		return nil, err
+	}
+
+	return &ep, nil
 
 }

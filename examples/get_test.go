@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/stretchr/testify/require"
 	"github.com/xmarlem/go-httpclient/gohttp"
 )
 
@@ -18,6 +19,22 @@ func TestMain(m *testing.M) {
 	gohttp.StartMockServer()
 
 	os.Exit(m.Run())
+}
+
+func TestUserAgent(t *testing.T) {
+
+	gohttp.FlushMocks()
+	gohttp.AddMock(gohttp.Mock{
+		Method:       http.MethodGet,
+		Url:          "https://api.github.com",
+		ResponseBody: `{"current_user_url": "https://api.github.com/user"}`,
+	})
+
+	ep, err := GetEndpointsWithUserAgent()
+
+	require.NoError(t, err)
+	require.NotEmpty(t, ep)
+
 }
 
 func TestGetEndpoints(t *testing.T) {

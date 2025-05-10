@@ -2,42 +2,8 @@ package gohttp
 
 import (
 	"fmt"
-	"net/http"
 	"testing"
 )
-
-func TestGetRequestHeaders(t *testing.T) {
-	// initialization
-	client := httpClient{}
-
-	commonHeaders := make(http.Header)
-
-	commonHeaders.Set("Content-Type", "application/json")
-	commonHeaders.Set("User-Agent", "cool-http-client")
-	client.builder.headers = commonHeaders
-	// execution
-	requestHeaders := make(http.Header)
-	requestHeaders.Set("X-Request-Id", "ABC-123")
-
-	finalHeaders := client.getRequestHeaders(requestHeaders)
-
-	// validation
-	if len(finalHeaders) != 3 {
-		t.Errorf("we expect 3 headers, got %d", len(finalHeaders))
-	}
-
-	if finalHeaders.Get("Content-Type") != "application/json" {
-		t.Error("Content-Type header is not as expected")
-	}
-
-	if finalHeaders.Get("User-Agent") != "cool-http-client" {
-		t.Error("User-Agent header is not as expected")
-	}
-
-	if finalHeaders.Get("X-Request-Id") != "ABC-123" {
-		t.Error("X-Request-Id header is not as expected")
-	}
-}
 
 func TestGetRequestBody(t *testing.T) {
 

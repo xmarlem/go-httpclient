@@ -15,18 +15,21 @@ import (
 )
 
 const (
-	defaultMaxIdleConnections = 5
-	defaultResponseTimeout    = 5 * time.Second
-	defaultConnectionTimeout  = 1 * time.Second
+	// NOTE: Non voglio settare il client.Timeout globale... meglio usare context.WithTimeout per limitare da fuori ...
+	// in quanto il timeout globale non e' retry-safe.
+	//
+	defaultMaxIdleConnections    = 5
+	defaultResponseHeaderTimeout = 10 * time.Second
+	defaultConnectionTimeout     = 1 * time.Second
+	defaultIdleConnTimeout       = 90 * time.Second //
 )
 
+// given the body in any format, it parses and returns the body as a slice of bytes
 func (c *httpClient) getRequestBody(contentType string, body any) ([]byte, error) {
 	if body == nil {
 		return nil, nil
 	}
-
 	// devo validare se e' un json, xml etc...
-
 	switch strings.ToLower(contentType) {
 	case gomime.ContentTypeJSON:
 		return json.Marshal(body)
@@ -38,6 +41,7 @@ func (c *httpClient) getRequestBody(contentType string, body any) ([]byte, error
 
 }
 
+// CORE function implementing all the calls
 func (c *httpClient) do(
 	method, url string,
 	headers http.Header,
@@ -95,9 +99,11 @@ func (c *httpClient) do(
 
 }
 
+// factory method implemented as a Singleton (do once!)
 func (c *httpClient) getHttpClient() *http.Client {
 	c.clientOnce.Do(func() {
 
+		// se il caller ha definito un custom http client dall'esterno, allora usa quello, altrimenti ...
 		// if the user provided its own custom client...
 		if c.builder.client != nil {
 			c.client = c.builder.client
@@ -106,15 +112,28 @@ func (c *httpClient) getHttpClient() *http.Client {
 		c.client = &http.Client{
 			Transport: &http.Transport{
 				MaxIdleConnsPerHost:   c.getMaxIdleConnections(),
-				ResponseHeaderTimeout: c.getResponseTimeout(),
+				ResponseHeaderTimeout: c.getResponseHeaderTimeout(),
 				DialContext: (&net.Dialer{
 					Timeout: c.getConnectionTimeout(),
 				}).DialContext,
+				IdleConnTimeout: c.getIdleConnTimeout(),
 			},
 		}
 	})
 
 	return c.client
+}
+
+// =======
+// Getters
+// =======
+
+func (c *httpClient) getIdleConnTimeout() time.Duration {
+	if c.builder.idleConnTimeout > 0 {
+		return c.builder.idleConnTimeout
+	}
+
+	return defaultMaxIdleConnections
 }
 
 func (c *httpClient) getMaxIdleConnections() int {
@@ -136,7 +155,7 @@ func (c *httpClient) getConnectionTimeout() time.Duration {
 	return defaultConnectionTimeout
 }
 
-func (c *httpClient) getResponseTimeout() time.Duration {
+func (c *httpClient) getResponseHeaderTimeout() time.Duration {
 	if c.builder.responseTimeout > 0 {
 		return c.builder.responseTimeout
 	}
@@ -145,5 +164,5 @@ func (c *httpClient) getResponseTimeout() time.Duration {
 		return 0
 	}
 
-	return defaultResponseTimeout
+	return defaultResponseHeaderTimeout
 }

@@ -9,22 +9,22 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	"github.com/xmarlem/go-httpclient/gohttp"
+	"github.com/xmarlem/go-httpclient/gohttpmock"
 )
 
 func TestMain(m *testing.M) {
 	fmt.Println("About to start test cases for package examples")
 
 	// Tells the HTTP library to mock any further requests from here.
-	gohttp.StartMockServer()
+	gohttpmock.StartMockServer()
 
 	os.Exit(m.Run())
 }
 
 func TestUserAgent(t *testing.T) {
 
-	gohttp.FlushMocks()
-	gohttp.AddMock(gohttp.Mock{
+	gohttpmock.DeleteMocks()
+	gohttpmock.AddMock(gohttpmock.Mock{
 		Method:       http.MethodGet,
 		Url:          "https://api.github.com",
 		ResponseBody: `{"current_user_url": "https://api.github.com/user"}`,
@@ -39,9 +39,9 @@ func TestUserAgent(t *testing.T) {
 
 func TestGetEndpoints(t *testing.T) {
 	t.Run("TestErrorFetchingFromGithub", func(t *testing.T) {
-		gohttp.FlushMocks()
+		gohttpmock.DeleteMocks()
 		// Initialization
-		gohttp.AddMock(gohttp.Mock{
+		gohttpmock.AddMock(gohttpmock.Mock{
 			Method: http.MethodGet,
 			Url:    "https://api.github.com",
 			Error:  errors.New("timemout getting github endpoints"),
@@ -64,10 +64,10 @@ func TestGetEndpoints(t *testing.T) {
 	})
 
 	t.Run("TestErrorUnmarshalResponseBody", func(t *testing.T) {
-		gohttp.FlushMocks()
+		gohttpmock.DeleteMocks()
 
 		// Initialization
-		gohttp.AddMock(gohttp.Mock{
+		gohttpmock.AddMock(gohttpmock.Mock{
 			Method:             http.MethodGet,
 			Url:                "https://api.github.com",
 			ResponseBody:       `{"current_user_url": 123}`,
@@ -92,10 +92,10 @@ func TestGetEndpoints(t *testing.T) {
 	})
 
 	t.Run("TestNoError", func(t *testing.T) {
-		gohttp.FlushMocks()
+		gohttpmock.DeleteMocks()
 
 		// Initialization
-		gohttp.AddMock(gohttp.Mock{
+		gohttpmock.AddMock(gohttpmock.Mock{
 			Method:             http.MethodGet,
 			Url:                "https://api.github.com",
 			ResponseBody:       `{"current_user_url": "https://api.github.com/user"}`,

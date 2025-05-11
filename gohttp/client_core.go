@@ -11,6 +11,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/xmarlem/go-httpclient/core"
+	"github.com/xmarlem/go-httpclient/gohttpmock"
 	"github.com/xmarlem/go-httpclient/gomime"
 )
 
@@ -46,7 +48,7 @@ func (c *httpClient) do(
 	method, url string,
 	headers http.Header,
 	body interface{},
-) (*Response, error) {
+) (*core.Response, error) {
 
 	// collect all the headers into one single place (both common and request headers)
 	fullHeaders := c.getRequestHeaders(headers)
@@ -63,7 +65,7 @@ func (c *httpClient) do(
 	// }
 
 	// required for testing...
-	if mock := mockupServer.getMock(method, url, string(requestBody)); mock != nil {
+	if mock := gohttpmock.GetMock(method, url, string(requestBody)); mock != nil {
 		return mock.GetResponse()
 	}
 
@@ -88,11 +90,11 @@ func (c *httpClient) do(
 	if err != nil {
 		return nil, err
 	}
-	finalResponse := Response{
-		status:     response.Status,
-		statusCode: response.StatusCode,
-		headers:    response.Header,
-		body:       responseBody,
+	finalResponse := core.Response{
+		Status:     response.Status,
+		StatusCode: response.StatusCode,
+		Headers:    response.Header,
+		Body:       responseBody,
 	}
 
 	return &finalResponse, nil
